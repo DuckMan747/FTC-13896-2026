@@ -14,7 +14,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(10);
+            .mass(10.61424)
+            .forwardZeroPowerAcceleration(-30.768999045402772)
+            .lateralZeroPowerAcceleration(-57.85725795194777)
+            .useSecondaryTranslationalPIDF(true)
+            .useSecondaryHeadingPIDF(true)
+            .useSecondaryDrivePIDF(true)
+            ;
 
 
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -26,19 +32,21 @@ public class Constants {
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
+            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .xVelocity(58.5184585691437)
+            .yVelocity(51.02765613465798)
+            ;
 
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(-5)
-            .strafePodX(0.5)
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("pinpoint")
             .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
+            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
             .forwardPodY(2.5)
-            .strafePodX(6);
+            .strafePodX(6)
+            ;
 
 
 
@@ -49,6 +57,12 @@ public class Constants {
                 .pathConstraints(pathConstraints)
                 .mecanumDrivetrain(driveConstants)
                 .pinpointLocalizer(localizerConstants)
-                .build();
+                .build()
+                ;
     }
 }
+
+//FrontLeft = Forward
+//BackLeft = Backwards
+//FrontRight = Backwards
+//BottomRight = Forwards

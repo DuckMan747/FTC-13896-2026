@@ -63,7 +63,7 @@ import java.util.List;
  */
 @TeleOp(name = "Concept: AprilTag Easy", group = "Concept")
 @Disabled
-public class ConceptAprilTagEasy extends LinearOpMode {
+public class vConceptAprilTagEasy extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
