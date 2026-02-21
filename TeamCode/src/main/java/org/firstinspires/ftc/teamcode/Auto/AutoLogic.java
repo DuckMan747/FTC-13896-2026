@@ -4,6 +4,7 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -27,11 +28,13 @@ public class AutoLogic extends OpMode {
         DRIVE_STARTPOS_SHOOTPOS,
         SHOOT_PRELOADED_ARTIFACTS,
         DRIVE_SHOOTPOS_LINEBALLPOS,
-        DRIVE_BALLPOS_LINECOLLECTPOS,
+        DRIVE_LINEBALLPOS_LINECOLLECTPOS,
         DRIVE_LINECOLLECTPOS_SHOOTPOS,
+        SHOOT_LINEBALL,
         DRIVE_SHOOTPOS_GATEPOS,
         DRIVE_GATEPOS_COLLECTPOS,
         DRIVE_COLLECTPOS_SHOOTPOS,
+        SHOOT_GATEBALL,
         DRIVE_SHOOTPOS_ENDPOS
 
 
@@ -39,16 +42,20 @@ public class AutoLogic extends OpMode {
 
     //Variable for enum
     PathState pathState;
-
-    private final Pose startPose = new Pose(47.84578313, 95.50843373, Math.toRadians(138));
-
-    private final Pose shootPose = new Pose(47.722,95.508433, Math.toRadians(138));
-
-    private final Pose ballPose = new Pose(41, 83.69397590361447, Math.toRadians(180));
-
+    private final Pose shootPose = new Pose(47.90,95.50, Math.toRadians(138));
+    private final Pose startPose = new Pose(21.00, 122.00, Math.toRadians(138));
+    private final Pose shootLineControl = new Pose(49.00,86.300);
+    private final Pose lineBallPose = new Pose(43.00, 84.00, Math.toRadians(180));
+    private final Pose lineCollectControlShoot = new Pose(41.60,87.00);
+    private final Pose lineCollectPose = new Pose(30.00,84.00,Math.toRadians(180));
+    private final Pose shootControlGate = new Pose(42.00,77.00);
+    private final Pose gatePose = new Pose(15.500,70.00,Math.toRadians(180));
+    private final Pose control1 = new Pose (20.886,61.908);
+    private final Pose control2 = new Pose (14.741,56.703);
+    private final Pose collectGate = new Pose(9.00,57.00,Math.toRadians(100));
+    private final Pose collectGateControlShoot = new Pose(48.00,79.00);
     private final Pose endPose = new Pose(56.038554216867475,105.13734939759036, Math.toRadians(138));
-
-    private PathChain driveStartPOSShootPOS,driveShootPOSBallPOS, driveShootPOSEndPOS;
+    private PathChain driveStartPOSShootPOS, driveShootPOSLineBallPOS, driveLineBallPOSLineCollectBallPOS, driveLineCollectBallPOSShootPos, driveShootPOSGatePOS, driveGatePOSCollectPOS, driveCollectPOSShootPOS, driveShootPOSEndPOS;
 
     public void buildPath(){
         // building paths from the pathchain before init
@@ -59,55 +66,92 @@ public class AutoLogic extends OpMode {
         driveStartPOSShootPOS = follower.pathBuilder()
                 // BezierLine will move the robot in a constant direction, in this case backwards from the blue thingy
                 .addPath(new BezierLine(startPose,shootPose))
-                // headings for both of our paths
-                .setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading())
+                // set a constant heavy heading from startPose to shoot pose
+                .setConstantHeadingInterpolation(startPose.getHeading())
                 .build();
+
+        driveShootPOSLineBallPOS = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose,shootLineControl,lineBallPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), lineBallPose.getHeading())
+                .build();
+
+        driveLineBallPOSLineCollectBallPOS = follower.pathBuilder()
+                .addPath(new BezierLine(lineBallPose,shootPose))
+                .setConstantHeadingInterpolation(lineBallPose.getHeading())
+                .build();
+
+        driveLineCollectBallPOSShootPos = follower.pathBuilder()
+                .addPath(new BezierCurve(lineCollectPose,lineCollectControlShoot,shootPose))
+                .setLinearHeadingInterpolation(lineCollectPose.getHeading(), shootPose.getHeading())
+                .build();
+
+        driveShootPOSGatePOS = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose,shootControlGate,gatePose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(),gatePose.getHeading())
+                .build();
+
+        driveGatePOSCollectPOS = follower.pathBuilder()
+                .addPath(new BezierCurve(gatePose,control1,control2,collectGate))
+                .setLinearHeadingInterpolation(gatePose.getHeading(),collectGate.getHeading())
+                .build();
+
+        driveCollectPOSShootPOS = follower.pathBuilder()
+                .addPath(new BezierCurve(collectGate,collectGateControlShoot,shootPose))
+                .setLinearHeadingInterpolation(gatePose.getHeading(),shootPose.getHeading())
+                .build();
+
         driveShootPOSEndPOS = follower.pathBuilder()
                 // another BezierLine to move us from the white shooting line, to inside of the triangle, this gives us a ranking point
                 .addPath(new BezierLine(shootPose,endPose))
                 // headings for each position
                 .setLinearHeadingInterpolation(shootPose.getHeading(), endPose.getHeading())
                 .build();
-        driveShootPOSBallPOS = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose,ballPose))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), ballPose.getHeading())
-                .build();
     }
 
     public void statePathUpdater() {
+
         switch(pathState) {
 
             case DRIVE_STARTPOS_SHOOTPOS:
                 follower.followPath(driveStartPOSShootPOS, true);
-                transitionPathState(PathState.SHOOT_PRELOADED_ARTIFACTS); // resets the called paths timer and transitions into a new state
-                break;
-
-            case SHOOT_PRELOADED_ARTIFACTS:
-                // check if follower is done moving on it's path and checks if 5 seconds have passed
-                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds() > 5) {
-                    //TODO add in shooting logic
-                    follower.followPath(driveShootPOSBallPOS, true);
-                    transitionPathState(PathState.DRIVE_SHOOTPOS_LINEBALLPOS); // resets the called paths timer and transitions into a new state
-                    telemetry.addLine("Shooting balls");
-
-                }
+                transitionPathState(PathState.DRIVE_SHOOTPOS_LINEBALLPOS); // resets the called paths timer and transitions into a new state
                 break;
 
             case DRIVE_SHOOTPOS_LINEBALLPOS:
-                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds() >3) {
-                    follower.followPath(driveShootPOSEndPOS, true);
-                    transitionPathState(PathState.DRIVE_SHOOTPOS_ENDPOS); // resets the called paths timer and transitions into a new state
-                    telemetry.addLine("Shooting balls");
-                }
+                follower.followPath(driveShootPOSLineBallPOS, true);
+                transitionPathState(PathState.DRIVE_LINEBALLPOS_LINECOLLECTPOS); // resets the called paths timer and transitions into a new state
                 break;
 
-                //TODO add in a second shoot balls
+
+            case DRIVE_LINEBALLPOS_LINECOLLECTPOS:
+                follower.followPath(driveLineBallPOSLineCollectBallPOS,true);
+                transitionPathState(PathState.DRIVE_LINECOLLECTPOS_SHOOTPOS);
+                break;
+
+            case DRIVE_LINECOLLECTPOS_SHOOTPOS:
+                follower.followPath(driveLineCollectBallPOSShootPos);
+                transitionPathState(PathState.DRIVE_SHOOTPOS_GATEPOS);
+                break;
+
+            case DRIVE_SHOOTPOS_GATEPOS:
+                follower.followPath(driveShootPOSGatePOS);
+                transitionPathState(PathState.DRIVE_GATEPOS_COLLECTPOS);
+                break;
+
+            case DRIVE_GATEPOS_COLLECTPOS:
+                follower.followPath(driveGatePOSCollectPOS);
+                transitionPathState(PathState.DRIVE_COLLECTPOS_SHOOTPOS);
+                break;
+
+            case DRIVE_COLLECTPOS_SHOOTPOS:
+                follower.followPath(driveCollectPOSShootPOS);
+                transitionPathState(PathState.DRIVE_SHOOTPOS_ENDPOS);
+                break;
 
             case DRIVE_SHOOTPOS_ENDPOS:
-                //done with paths :D
+                follower.followPath(driveShootPOSEndPOS);
                 if (!follower.isBusy()) {
                     telemetry.addLine("Done all paths :D");
-
                 }
                 break;
 
