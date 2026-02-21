@@ -26,17 +26,19 @@ public class AutoLogic extends OpMode {
         // SHOOT > ATTEMPT TO SCORE
 
         DRIVE_STARTPOS_SHOOTPOS,
-        SHOOT_PRELOADED_ARTIFACTS,
         DRIVE_SHOOTPOS_LINEBALLPOS,
         DRIVE_LINEBALLPOS_LINECOLLECTPOS,
         DRIVE_LINECOLLECTPOS_SHOOTPOS,
-        SHOOT_LINEBALL,
         DRIVE_SHOOTPOS_GATEPOS,
         DRIVE_GATEPOS_COLLECTPOS,
         DRIVE_COLLECTPOS_SHOOTPOS,
-        SHOOT_GATEBALL,
-        DRIVE_SHOOTPOS_ENDPOS
+        DRIVE_SHOOTPOS_ENDPOS,
+/*
+        SHOOT_PRELOADED_ARTIFACTS,
+        SHOOT_LINEBALL,
+        SHOOT_GATEBALL
 
+*/
 
     }
 
@@ -55,6 +57,9 @@ public class AutoLogic extends OpMode {
     private final Pose collectGate = new Pose(9.00,57.00,Math.toRadians(100));
     private final Pose collectGateControlShoot = new Pose(48.00,79.00);
     private final Pose endPose = new Pose(56.038554216867475,105.13734939759036, Math.toRadians(138));
+
+    private Path shootPreloadedArtifacts, shootLineBall, shootGateBall;
+
     private PathChain driveStartPOSShootPOS, driveShootPOSLineBallPOS, driveLineBallPOSLineCollectBallPOS, driveLineCollectBallPOSShootPos, driveShootPOSGatePOS, driveGatePOSCollectPOS, driveCollectPOSShootPOS, driveShootPOSEndPOS;
 
     public void buildPath(){
@@ -67,7 +72,7 @@ public class AutoLogic extends OpMode {
                 // BezierLine will move the robot in a constant direction, in this case backwards from the blue thingy
                 .addPath(new BezierLine(startPose,shootPose))
                 // set a constant heavy heading from startPose to shoot pose
-                .setConstantHeadingInterpolation(startPose.getHeading())
+                .setLinearHeadingInterpolation(startPose.getHeading(),shootPose.getHeading())
                 .build();
 
         driveShootPOSLineBallPOS = follower.pathBuilder()
@@ -76,7 +81,7 @@ public class AutoLogic extends OpMode {
                 .build();
 
         driveLineBallPOSLineCollectBallPOS = follower.pathBuilder()
-                .addPath(new BezierLine(lineBallPose,shootPose))
+                .addPath(new BezierLine(lineBallPose,lineCollectPose))
                 .setConstantHeadingInterpolation(lineBallPose.getHeading())
                 .build();
 
@@ -109,7 +114,6 @@ public class AutoLogic extends OpMode {
     }
 
     public void statePathUpdater() {
-
         switch(pathState) {
 
             case DRIVE_STARTPOS_SHOOTPOS:
@@ -158,7 +162,6 @@ public class AutoLogic extends OpMode {
             default:
                 telemetry.addLine("No State Found");
                 break;
-
         }
     }
 
