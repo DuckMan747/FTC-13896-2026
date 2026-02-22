@@ -157,6 +157,7 @@ public class TopAutoBlue extends OpMode {
                 break;
 
             case DRIVE_LINEBALLPOS1_LINECOLLECTPOS1:
+                //at pos
                 if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds() > 1.0) {
                     mechanism.setIntakeSpeed(1);
 
@@ -224,6 +225,7 @@ public class TopAutoBlue extends OpMode {
                 break;
 
             case DRIVE_LINEBALLPOS2_LINECOLLECTPOS2:
+
                 if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds() > 1.0) {
                     mechanism.setIntakeSpeed(1);
 
